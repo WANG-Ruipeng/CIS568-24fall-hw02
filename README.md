@@ -2,9 +2,10 @@
 
 ## Demo
 
-
-https://github.com/user-attachments/assets/972a3d90-e171-4d5a-b9ff-ce7aa0695f40
-
+<video width="640" height="480" controls>
+  <source src="https://github.com/user-attachments/assets/972a3d90-e171-4d5a-b9ff-ce7aa0695f40" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
 
 ## Development Log
 
