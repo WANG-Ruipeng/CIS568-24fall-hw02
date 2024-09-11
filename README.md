@@ -14,6 +14,8 @@ I began by focusing on creating destructible objects with a particle-based feel.
 
 To streamline the process, I decided to pre-bake the destructible objects into small particles. When the player interacts with these objects, the particles are given a slight initial velocity, simulating a "breaking" effect. This approach effectively conveys the sense of destruction without overcomplicating the system.
 
+![Screenshot1](https://github.com/user-attachments/assets/c78f44ac-00be-40f9-8d5b-2bf08c2cbb7c)
+
 ### **Control System**
 
 At first, I developed the 'Crash' and 'Control' abilities to use different inputs. However, this approach quickly proved computationally expensive. With over a thousand particles in the scene, iterating through the particle list every frame caused significant lag, making the game unplayable.
