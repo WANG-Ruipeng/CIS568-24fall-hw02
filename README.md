@@ -1,4 +1,9 @@
 # Develop Log-Beta Version
+## Demo
+
+<video width="640" height="480" controls>
+  <source src="https://github.com/user-attachments/assets/e3ec170f-b2eb-475e-bdcd-c5033b4b7b21" type="video/mp4">
+</video>
 
 ## Development Log
 
