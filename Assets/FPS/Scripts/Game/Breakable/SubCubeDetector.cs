@@ -1,42 +1,106 @@
 using UnityEngine;
 using TMPro;
+using UnityEngine.Events;
+using Unity.FPS.Game;
+using System;
 
 public class SubCubeDetector : MonoBehaviour
 {
-    public Vector3 detectionCenter; // 球形检测的中心
-    public float detectionRadius = 5f; // 球形检测的半径
-    public string subCubeTag = "SubCubeTag"; // 小方块的Tag
+    public Vector3 detectionCenter;
+    public float detectionRadius = 5f;
+    public string subCubeTag = "SubCubeTag";
     public int subCubeNum = 0;
 
-    private TextMeshProUGUI textMeshPro; // 引用TextMeshPro组件
-    private Transform cameraTransform; // 引用主相机的Transform
+    [Header("Cube Count Bounds")]
+    public int lowerBound = 500;  
+    public int upperBound = 700;  
+    public bool isInbound;
+
+    [Header("Inbound Timer")]
+    public float requiredInboundTime = 5f; 
+    public UnityEvent onInboundTimerComplete; 
+    public float currentInboundTime = 0f;
+    public bool timerCompleted = false;
+    public static event Action<int> OnTimerComplete;
+
+    private TextMeshProUGUI textMeshPro;
+    private Transform cameraTransform;
+    public Transform cylinderTransform;
 
     void Start()
     {
         detectionCenter = transform.position;
-
-        // 获取TextMeshPro组件的引用
         textMeshPro = GetComponentInChildren<TextMeshProUGUI>();
+        isInbound = false;
 
         if (textMeshPro == null)
         {
             Debug.LogError("TextMeshProUGUI component not found on child objects.");
         }
-
-        // 获取主相机的Transform
         cameraTransform = Camera.main.transform;
     }
 
     private void Update()
     {
         DetectSubCube();
-
-        // 更新TextMeshPro的文字内容
         if (textMeshPro != null)
         {
-            textMeshPro.text = "Cubes in Range: " + subCubeNum;
-            // 让TMP对象始终朝向主相机
-            textMeshPro.transform.rotation = Quaternion.LookRotation(textMeshPro.transform.position - cameraTransform.position);
+            UpdateTextDisplay();
+        }
+        UpdateInboundTimer();
+    }
+    private void UpdateInboundTimer()
+    {
+        if (isInbound && !timerCompleted)
+        {
+            currentInboundTime += Time.deltaTime;
+            if (currentInboundTime >= requiredInboundTime)
+            {
+                timerCompleted = true;
+                onInboundTimerComplete.Invoke();
+            }
+        }
+        else if (!isInbound)
+        {
+            currentInboundTime = 0f;
+            timerCompleted = false;
+        }
+    }
+
+    private void UpdateTextDisplay()
+    {
+        textMeshPro.text = "Cubes in Range: " + subCubeNum;
+        if (isInbound)
+        {
+            textMeshPro.color = Color.green;
+        }
+        else
+        {
+            textMeshPro.color = Color.red;
+        }
+
+        textMeshPro.transform.rotation = Quaternion.LookRotation(textMeshPro.transform.position - cameraTransform.position);
+    }
+
+    public void onTimerComplete()
+    {
+        Debug.Log("Inbound timer completed!");
+        OnTimerComplete?.Invoke(subCubeNum);
+    }
+
+    public void UpdateCylinderSize()
+    {
+        if (cylinderTransform != null)
+        {
+            float diameter = detectionRadius * 2;
+            cylinderTransform.localScale = new Vector3(diameter, 0.05f, diameter);
+            Vector3 newPosition = detectionCenter - transform.position;
+            newPosition.y = 0.25f;
+            cylinderTransform.localPosition = newPosition;
+        }
+        else
+        {
+            Debug.LogError("Cylinder transform is not set.");
         }
     }
 
@@ -44,6 +108,14 @@ public class SubCubeDetector : MonoBehaviour
     {
         int subCubeCount = DetectSubCubesInSphere(detectionCenter, detectionRadius);
         subCubeNum = subCubeCount;
+        bool wasInbound = isInbound;
+        isInbound = subCubeNum >= lowerBound && subCubeNum <= upperBound;
+
+        if (wasInbound && !isInbound)
+        {
+            currentInboundTime = 0f;
+            timerCompleted = false;
+        }
     }
 
     public void MoveDetectionCenterToPosition()
@@ -54,11 +126,8 @@ public class SubCubeDetector : MonoBehaviour
 
     int DetectSubCubesInSphere(Vector3 center, float radius)
     {
-        // 使用Physics.OverlapSphere检测给定区域内的所有碰撞体
         Collider[] hitColliders = Physics.OverlapSphere(center, radius);
-
         int count = 0;
-        // 遍历检测到的所有碰撞体，筛选出具有特定Tag的物体
         foreach (Collider hitCollider in hitColliders)
         {
             if (hitCollider.CompareTag(subCubeTag))
@@ -67,10 +136,15 @@ public class SubCubeDetector : MonoBehaviour
             }
         }
 
-        return count; // 返回检测到的小方块数量
+        return count;
     }
 
-    // 可视化检测范围，便于调试
+    public void ResetInboundTimer()
+    {
+        currentInboundTime = 0f;
+        timerCompleted = false;
+    }
+
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;

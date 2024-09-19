@@ -49,7 +49,11 @@ MonoBehaviour:
   subCubeCount: 10
   fullCube: {fileID: 2665167845652525052}
   fragmentParent: {fileID: 4270040457955659412}
-  targetPoint: {x: -18, y: 2, z: 2}
+  subCubeMaterial: {fileID: 2100010, guid: 598a1f45fefa08846b93be35e98f166e, type: 3}
+  playerTransform: {fileID: 0}
+  maxSpeed: 10
+  minSpeed: 1
+  moveSpeedMultiplier: 1
 --- !u!1 &2665167845652525052
 GameObject:
   m_ObjectHideFlags: 0

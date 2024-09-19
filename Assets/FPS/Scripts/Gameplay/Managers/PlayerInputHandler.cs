@@ -24,6 +24,22 @@ namespace Unity.FPS.Gameplay
         PlayerCharacterController m_PlayerCharacterController;
         bool m_FireInputWasHeld;
 
+        [Tooltip("是否启用触屏控制")]
+        public bool enableTouchControl = true;
+
+        [Tooltip("触屏移动的敏感度")]
+        public float touchMoveSensitivity = 0.1f;
+
+        [Tooltip("触屏旋转的敏感度")]
+        public float touchLookSensitivity = 0.1f;
+
+        private Vector2 moveInput;
+        private Vector2 lookInput;
+        private Vector2 touchStartPosition;
+        private Vector2 currentTouchPosition;
+        private bool isTouching = false;
+        public bool isTouchingFireButton = false;
+
         void Start()
         {
             m_PlayerCharacterController = GetComponent<PlayerCharacterController>();
@@ -50,13 +66,36 @@ namespace Unity.FPS.Gameplay
         {
             if (CanProcessInput())
             {
-                Vector3 move = new Vector3(Input.GetAxisRaw(GameConstants.k_AxisNameHorizontal), 0f,
-                    Input.GetAxisRaw(GameConstants.k_AxisNameVertical));
+                if (enableTouchControl && Input.touchCount > 0)
+                {
+                    foreach (Touch touch in Input.touches)
+                    {
+                        if (touch.phase == TouchPhase.Began)
+                        {
+                            touchStartPosition = touch.position;
+                            isTouching = true;
+                        }
+                        else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
+                        {
+                            isTouching = false;
+                        }
 
-                // constrain move input to a maximum magnitude of 1, otherwise diagonal movement might exceed the max move speed defined
-                move = Vector3.ClampMagnitude(move, 1);
-
-                return move;
+                        if (isTouching && touch.position.x > Screen.width / 2)
+                        {
+                            currentTouchPosition = touch.position;
+                            Vector2 touchDelta = (currentTouchPosition - touchStartPosition) * touchMoveSensitivity;
+                            Vector3 move = new Vector3(touchDelta.x, 0f, touchDelta.y);
+                            return Vector3.ClampMagnitude(move, 1);
+                        }
+                    }
+                }
+                else
+                {
+                    Vector3 move = new Vector3(Input.GetAxisRaw(GameConstants.k_AxisNameHorizontal), 0f,
+                        Input.GetAxisRaw(GameConstants.k_AxisNameVertical));
+                    move = Vector3.ClampMagnitude(move, 1);
+                    return move;
+                }
             }
 
             return Vector3.zero;
@@ -64,14 +103,46 @@ namespace Unity.FPS.Gameplay
 
         public float GetLookInputsHorizontal()
         {
-            return GetMouseOrStickLookAxis(GameConstants.k_MouseAxisNameHorizontal,
+            if (enableTouchControl && Input.touchCount > 0)
+            {
+                lookInput = Vector2.zero;
+                foreach (Touch touch in Input.touches)
+                {
+                    if (touch.position.x <= Screen.width / 2)
+                    {
+                        lookInput.x = touch.deltaPosition.x * touchLookSensitivity;
+                    }
+                }
+                return lookInput.x;
+            }
+            else
+            {
+                return GetMouseOrStickLookAxis(GameConstants.k_MouseAxisNameHorizontal,
                 GameConstants.k_AxisNameJoystickLookHorizontal);
+            }
+            
         }
 
         public float GetLookInputsVertical()
         {
-            return GetMouseOrStickLookAxis(GameConstants.k_MouseAxisNameVertical,
+            if (enableTouchControl && Input.touchCount > 0)
+            {
+                lookInput = Vector2.zero;
+                foreach (Touch touch in Input.touches)
+                {
+                    if (touch.position.x <= Screen.width / 2)
+                    {
+                        return InvertYAxis ? touch.deltaPosition.y * touchLookSensitivity : -touch.deltaPosition.y * touchLookSensitivity;
+                    }
+                }
+                return 0f;
+            }
+            else
+            {
+                return GetMouseOrStickLookAxis(GameConstants.k_MouseAxisNameVertical,
                 GameConstants.k_AxisNameJoystickLookVertical);
+            }
+            
         }
 
         public bool GetJumpInputDown()
@@ -106,7 +177,7 @@ namespace Unity.FPS.Gameplay
 
         public bool GetFireInputHeld()
         {
-            if (CanProcessInput())
+            if (!enableTouchControl && CanProcessInput())
             {
                 bool isGamepad = Input.GetAxis(GameConstants.k_ButtonNameGamepadFire) != 0f;
                 if (isGamepad)
@@ -118,13 +189,16 @@ namespace Unity.FPS.Gameplay
                     return Input.GetButton(GameConstants.k_ButtonNameFire);
                 }
             }
-
-            return false;
+            else
+            {
+                return isTouchingFireButton;
+            }
+            
         }
 
         public bool GetAimInputHeld()
         {
-            if (CanProcessInput())
+            if (!enableTouchControl && CanProcessInput())
             {
                 bool isGamepad = Input.GetAxis(GameConstants.k_ButtonNameGamepadAim) != 0f;
                 bool i = isGamepad
@@ -132,8 +206,11 @@ namespace Unity.FPS.Gameplay
                     : Input.GetButton(GameConstants.k_ButtonNameAim);
                 return i;
             }
-
-            return false;
+            else
+            {
+                return false;
+            }
+            
         }
 
         public bool GetSprintInputHeld()

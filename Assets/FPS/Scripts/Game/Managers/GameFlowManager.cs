@@ -27,7 +27,10 @@ namespace Unity.FPS.Game
         [Header("Lose")] [Tooltip("This string has to be the name of the scene you want to load when losing")]
         public string LoseSceneName = "LoseScene";
 
+        [Header("Timer")]
+        public float GameDuration = 300f;
 
+        public TimerManager timerManager;
         public bool GameIsEnding { get; private set; }
 
         float m_TimeLoadEndGameScene;
@@ -37,11 +40,27 @@ namespace Unity.FPS.Game
         {
             EventManager.AddListener<AllObjectivesCompletedEvent>(OnAllObjectivesCompleted);
             EventManager.AddListener<PlayerDeathEvent>(OnPlayerDeath);
+
+            //timerManager = TimerManager.Instance;
+            if (timerManager == null)
+            {
+                Debug.LogError("TimerManager instance not found!");
+            }
+            else
+            {
+                timerManager.TotalTime = GameDuration;
+                timerManager.OnTimerEnd += OnTimerEnd;
+            }
         }
 
         void Start()
         {
             AudioUtility.SetMasterVolume(1);
+            
+        }
+        void OnTimerEnd()
+        {
+            EndGame(false);
         }
 
         void Update()
@@ -60,6 +79,8 @@ namespace Unity.FPS.Game
                     GameIsEnding = false;
                 }
             }
+
+            
         }
 
         void OnAllObjectivesCompleted(AllObjectivesCompletedEvent evt) => EndGame(true);
@@ -110,6 +131,10 @@ namespace Unity.FPS.Game
         {
             EventManager.RemoveListener<AllObjectivesCompletedEvent>(OnAllObjectivesCompleted);
             EventManager.RemoveListener<PlayerDeathEvent>(OnPlayerDeath);
+            if (timerManager != null)
+            {
+                timerManager.OnTimerEnd -= OnTimerEnd;
+            }
         }
     }
 }

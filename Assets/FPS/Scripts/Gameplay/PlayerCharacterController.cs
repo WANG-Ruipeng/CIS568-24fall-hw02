@@ -118,7 +118,7 @@ namespace Unity.FPS.Gameplay
         }
 
         Health m_Health;
-        PlayerInputHandler m_InputHandler;
+        public PlayerInputHandler m_InputHandler;
         CharacterController m_Controller;
         PlayerWeaponsManager m_WeaponsManager;
         Actor m_Actor;
@@ -213,6 +213,11 @@ namespace Unity.FPS.Gameplay
 
             UpdateCharacterHeight(false);
 
+            //HandleCharacterMovement();
+        }
+
+        private void FixedUpdate()
+        {
             HandleCharacterMovement();
         }
 

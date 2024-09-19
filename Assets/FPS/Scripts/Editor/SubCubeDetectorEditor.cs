@@ -13,5 +13,10 @@ public class SubCubeDetectorEditor : Editor
         {
             detector.MoveDetectionCenterToPosition();
         }
+        if (GUILayout.Button("Update Cylinder Size"))
+        {
+            detector.UpdateCylinderSize();
+            EditorUtility.SetDirty(detector.gameObject);
+        }
     }
 }

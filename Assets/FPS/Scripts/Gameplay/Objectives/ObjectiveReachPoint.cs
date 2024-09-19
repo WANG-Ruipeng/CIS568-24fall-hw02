@@ -8,9 +8,12 @@ namespace Unity.FPS.Gameplay
     {
         [Tooltip("Visible transform that will be destroyed once the objective is completed")]
         public Transform DestroyRoot;
+        public TimerManager timerManager;
+        public float bonusTime = 60.0f;
 
         void Awake()
         {
+            
             if (DestroyRoot == null)
                 DestroyRoot = transform;
         }
@@ -29,6 +32,8 @@ namespace Unity.FPS.Gameplay
                 // destroy the transform, will remove the compass marker if it has one
                 Destroy(DestroyRoot.gameObject);
             }
+            timerManager = TimerManager.Instance;
+            timerManager.RemainingTime += bonusTime;
         }
     }
 }
